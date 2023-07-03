@@ -7,7 +7,7 @@ import { faCheck, faEdit, faTimes, faTrash } from '@fortawesome/free-solid-svg-i
 function App() {
   const [todos, setTodos] = useState([])
   const [name, setName] = useState("")
-  const [editInput, setEditInput] = useState(false)
+  const [editInputId, setEditInputId] = useState("")
   const [updateName, setUpdateName] = useState("")
 
   useEffect(() => {
@@ -24,20 +24,27 @@ function App() {
   const addTodo = (e) => {
     e.preventDefault()
 
-    const newTodo = { id: uuid(), name: name, completed: false, created_at: new Date() }
-
-    setTodos([...todos, newTodo])
-    localStorage.setItem("todos", JSON.stringify(todos))
-    setName("")
+    if(name){
+      const newTodo = { id: uuid(), name: name, completed: false, created_at: new Date() }
+  
+      setTodos([...todos, newTodo])
+      localStorage.setItem("todos", JSON.stringify(todos))
+      setName("")
+    }
   }
 
   const toggleComplete = (id) => {
-    setTodos(todos.map(todo => todo.id === id ? {...todo, completed: !todo.completed} : todo))
-    localStorage.setItem("todos", JSON.stringify(todos))
+    const newTodos = todos.map(todo => todo.id === id ? {...todo, completed: !todo.completed} : todo)
+    setTodos(newTodos)
+    localStorage.setItem("todos", JSON.stringify(newTodos))
   }
 
   const updateTodo = (id) => {
-    setEditInput(!editInput)
+    const newTodos = todos.map(todo => todo.id === id ? {...todo, name: updateName} : todo)
+    setTodos(newTodos)
+    localStorage.setItem("todos", JSON.stringify(newTodos))
+    setEditInputId("")
+    setUpdateName("")
   }
 
   const deleteTodo = (id) => {
@@ -76,20 +83,30 @@ function App() {
                     { todos.map(t => (
                       <tr className={t.completed ? "table-success" : ""} key={t.id}>
                         <td>
-                          { editInput ? (
-                            <input value={t.name} className="form-control" type='text' />
+                          { editInputId === t.id ? (
+                            <input onChange={e => setUpdateName(e.target.value.trim())} value={updateName} className="form-control" type='text' />
                           ) : (
                             t.name
                           ) }  
                         </td>
                         <td>
-                          <button 
-                            onClick={() => toggleComplete(t.id)} 
-                            className={`btn btn-${t.completed ? "danger" : "success"} btn-sm me-2`}>
-                              {!t.completed ? <FontAwesomeIcon icon={faCheck} /> : <FontAwesomeIcon icon={faTimes} />}  
-                          </button>
-                          <button onClick={() => updateTodo(t.id)} className="btn btn-warning btn-sm me-2"><FontAwesomeIcon icon={faEdit} /></button>
-                          <button onClick={() => deleteTodo(t.id)} className="btn btn-danger btn-sm"><FontAwesomeIcon icon={faTrash} /></button>
+                          { editInputId !== t.id
+                           ? (
+                            <>
+                             <button 
+                               onClick={() => toggleComplete(t.id)} 
+                               className="btn btn-success btn-sm me-2"><FontAwesomeIcon icon={faCheck} /></button>
+                             <button onClick={() => {setEditInputId(t.id); setUpdateName(t.name)}} className="btn btn-warning btn-sm me-2"><FontAwesomeIcon icon={faEdit} /></button>
+                             <button onClick={() => deleteTodo(t.id)} className="btn btn-danger btn-sm"><FontAwesomeIcon icon={faTrash} /></button>
+                            </>
+                           )
+                           : (
+                            <>
+                              <button onClick={e => updateTodo(t.id)} className="btn btn-success btn-sm me-2"><FontAwesomeIcon icon={faEdit} /></button>
+                              <button onClick={e => setEditInputId("")} className="btn btn-danger btn-sm"><FontAwesomeIcon icon={faTimes} /></button>
+                            </>
+                           )
+                          }
                         </td>
                       </tr>
                     )) }
